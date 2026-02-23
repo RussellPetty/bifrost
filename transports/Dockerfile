@@ -24,20 +24,40 @@ RUN apk add --no-cache gcc musl-dev sqlite-dev binutils binutils-gold
 # Set environment for CGO-enabled build (required for go-sqlite3)
 ENV CGO_ENABLED=1 GOOS=linux
 
-COPY transports/go.mod transports/go.sum ./
-RUN ls
-RUN cat go.mod
+# Copy go.mod/go.sum for all local modules (dependency caching)
+COPY core/go.mod core/go.sum ./core/
+COPY framework/go.mod framework/go.sum ./framework/
+COPY plugins/governance/go.mod plugins/governance/go.sum ./plugins/governance/
+COPY plugins/jsonparser/go.mod plugins/jsonparser/go.sum ./plugins/jsonparser/
+COPY plugins/litellmcompat/go.mod plugins/litellmcompat/go.sum ./plugins/litellmcompat/
+COPY plugins/logging/go.mod plugins/logging/go.sum ./plugins/logging/
+COPY plugins/maxim/go.mod plugins/maxim/go.sum ./plugins/maxim/
+COPY plugins/mocker/go.mod plugins/mocker/go.sum ./plugins/mocker/
+COPY plugins/otel/go.mod plugins/otel/go.sum ./plugins/otel/
+COPY plugins/semanticcache/go.mod plugins/semanticcache/go.sum ./plugins/semanticcache/
+COPY plugins/telemetry/go.mod plugins/telemetry/go.sum ./plugins/telemetry/
+COPY transports/go.mod transports/go.sum ./transports/
+
+# Create go workspace so the build uses local modules instead of published versions
+RUN go work init ./core ./framework \
+  ./plugins/governance ./plugins/jsonparser ./plugins/litellmcompat \
+  ./plugins/logging ./plugins/maxim ./plugins/mocker \
+  ./plugins/otel ./plugins/semanticcache ./plugins/telemetry \
+  ./transports
+
 RUN go mod download
 
-# Copy source code and dependencies
-COPY transports/ ./
+# Copy source code
+COPY core/ ./core/
+COPY framework/ ./framework/
+COPY plugins/ ./plugins/
+COPY transports/ ./transports/
 
-COPY --from=ui-builder /app/out ./bifrost-http/ui
+COPY --from=ui-builder /app/out ./transports/bifrost-http/ui
 
 # Build the binary with CGO enabled and static SQLite linking
-ENV GOWORK=off
 ARG VERSION=unknown
-RUN go build \
+RUN cd transports && go build \
   -ldflags="-w -s -X main.Version=v${VERSION} -extldflags '-static'" \
   -a -trimpath \
   -tags "sqlite_static" \

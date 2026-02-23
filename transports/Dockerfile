@@ -96,6 +96,8 @@ ENV APP_PORT=$ARG_APP_PORT \
   APP_DIR=$ARG_APP_DIR
 
 
+COPY transports/data/config.json $APP_DIR/config.json
+
 RUN mkdir -p $APP_DIR/logs && \
   chmod +x /app/docker-entrypoint.sh
 

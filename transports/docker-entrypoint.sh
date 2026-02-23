@@ -36,10 +36,10 @@ fix_permissions() {
 # Fix permissions before starting the application
 fix_permissions
 
-# Copy default config into data volume if not present
-if [ -f /app/default-config.json ] && [ ! -f "$APP_DIR/config.json" ]; then
+# Always sync default config into data volume from image
+if [ -f /app/default-config.json ]; then
     cp /app/default-config.json "$APP_DIR/config.json"
-    echo "Copied default config.json into $APP_DIR"
+    echo "Synced config.json into $APP_DIR"
 fi
 
 # Parse command line arguments and set environment variables

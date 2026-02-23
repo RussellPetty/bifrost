@@ -72,9 +72,5 @@ if [ $# -gt 1 ]; then
     parse_args "$@"
 fi
 
-# Drop to appuser if running as root (e.g. Railway volume mounts are root-owned)
-if [ "$(id -u)" = "0" ]; then
-    exec su-exec appuser /app/main -app-dir "$APP_DIR" -port "$APP_PORT" -host "$APP_HOST" -log-level "$LOG_LEVEL" -log-style "$LOG_STYLE"
-else
-    exec /app/main -app-dir "$APP_DIR" -port "$APP_PORT" -host "$APP_HOST" -log-level "$LOG_LEVEL" -log-style "$LOG_STYLE"
-fi
+# Build the command with environment variables and standard arguments
+exec /app/main -app-dir "$APP_DIR" -port "$APP_PORT" -host "$APP_HOST" -log-level "$LOG_LEVEL" -log-style "$LOG_STYLE"
